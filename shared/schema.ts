@@ -24,6 +24,7 @@ export const alarms = pgTable("alarms", {
   mathProblem: boolean("math_problem").default(false),
   securityScan: boolean("security_scan").default(false),
   phishingDrill: boolean("phishing_drill").default(false),
+  settings: text("settings"), // JSON string for storing additional settings
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

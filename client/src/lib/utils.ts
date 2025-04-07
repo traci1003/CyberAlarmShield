@@ -143,3 +143,30 @@ export function getStatusBgClass(score: number): string {
 export function calculateStrokeDashoffset(score: number, circumference: number): number {
   return circumference - (score / 100) * circumference;
 }
+
+export function formatTimeForInput(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+export function convertFormAlarmToApiAlarm(formData: any): Omit<any, 'id'> {
+  return {
+    time: formData.time,
+    label: formData.label || undefined,
+    days: formData.days,
+    isActive: true,
+    vibrate: formData.vibrate,
+    sound: formData.sound,
+    mathProblem: formData.mathProblem,
+    securityScan: formData.securityScan,
+    phishingDrill: formData.phishingDrill,
+    // Add any additional properties to store in the database
+    settings: JSON.stringify({
+      volumeLevel: formData.volumeLevel,
+      gradualVolume: formData.gradualVolume,
+      snoozeCount: formData.snoozeCount,
+      snoozeDuration: formData.snoozeDuration
+    })
+  };
+}

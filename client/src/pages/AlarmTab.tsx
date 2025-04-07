@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlarmItem } from "@/components/AlarmItem";
+import { AlarmForm } from "@/components/AlarmForm";
 import { useAlarms } from "@/hooks/useAlarms";
 import { useSecurity } from "@/hooks/useSecurity";
-import { formatTime, formatAmPm, formatDate } from "@/lib/utils";
+import { formatTime, formatAmPm, formatDate, convertFormAlarmToApiAlarm } from "@/lib/utils";
 import { AlarmModal } from "@/components/AlarmModal";
 import { ScanResultModal } from "@/components/ScanResultModal";
+import { MathProblemModal } from "@/components/MathProblemModal";
+import { Alarm } from "@/lib/types";
+import { PlusCircle } from "lucide-react";
 
 export default function AlarmTab() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showAlarmModal, setShowAlarmModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showMathProblemModal, setShowMathProblemModal] = useState(false);
+  const [showAlarmForm, setShowAlarmForm] = useState(false);
+  const [editAlarm, setEditAlarm] = useState<Alarm | null>(null);
   
-  const { alarms, alarmsLoading, toggleAlarmActive } = useAlarms();
+  const { 
+    alarms, 
+    alarmsLoading, 
+    toggleAlarmActive, 
+    createAlarm, 
+    updateAlarm, 
+    deleteAlarm 
+  } = useAlarms();
+  
   const { securityTip, performSecurityCheck, latestScan } = useSecurity();
   
   // Update time every minute
@@ -23,6 +38,15 @@ export default function AlarmTab() {
     
     return () => clearInterval(timer);
   }, []);
+
+  // Update time every second for more accurate display
+  useEffect(() => {
+    const secondTimer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(secondTimer);
+  }, []);
   
   const handleSnooze = () => {
     setShowAlarmModal(false);
@@ -32,10 +56,28 @@ export default function AlarmTab() {
     }, 5 * 60 * 1000);
   };
   
-  const handleStartScan = () => {
+  const handleDismissAlarm = () => {
+    // Randomly decide whether to show math problems or security scan
+    const usesMathProblem = Math.random() > 0.5;
+    
     setShowAlarmModal(false);
-    performSecurityCheck();
-    setShowScanModal(true);
+    
+    if (usesMathProblem) {
+      setShowMathProblemModal(true);
+    } else {
+      performSecurityCheck();
+      setShowScanModal(true);
+    }
+  };
+  
+  const handleMathProblemComplete = () => {
+    setShowMathProblemModal(false);
+  };
+  
+  const handleMathProblemCancel = () => {
+    setShowMathProblemModal(false);
+    // Go back to snooze
+    handleSnooze();
   };
   
   const handleDismissScan = () => {
@@ -45,6 +87,39 @@ export default function AlarmTab() {
   // Demo - show alarm modal
   const handleDemoAlarm = () => {
     setShowAlarmModal(true);
+  };
+  
+  // Open add alarm form
+  const handleAddAlarm = () => {
+    setEditAlarm(null);
+    setShowAlarmForm(true);
+  };
+  
+  // Open edit alarm form
+  const handleEditAlarm = (alarm: Alarm) => {
+    setEditAlarm(alarm);
+    setShowAlarmForm(true);
+  };
+  
+  // Handle saving alarm form
+  const handleSaveAlarm = (formData: any) => {
+    const alarmData = convertFormAlarmToApiAlarm(formData);
+    
+    if (editAlarm) {
+      updateAlarm({ id: editAlarm.id, data: alarmData });
+    } else {
+      createAlarm(alarmData);
+    }
+    
+    setShowAlarmForm(false);
+    setEditAlarm(null);
+  };
+  
+  // Handle deleting alarm
+  const handleDeleteAlarm = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this alarm?")) {
+      deleteAlarm(id);
+    }
   };
   
   return (
@@ -62,8 +137,8 @@ export default function AlarmTab() {
       <div className="bg-muted rounded-t-3xl px-5 pt-6 pb-24">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-foreground">Active Alarms</h2>
-          <Button size="icon" className="rounded-full">
-            <i className="ri-add-line text-xl"></i>
+          <Button size="icon" className="rounded-full" onClick={handleAddAlarm}>
+            <PlusCircle className="h-5 w-5" />
           </Button>
         </div>
 
@@ -74,7 +149,8 @@ export default function AlarmTab() {
         ) : alarms.length === 0 ? (
           <div className="bg-card rounded-xl p-6 text-center">
             <p className="text-muted-foreground mb-4">No alarms set</p>
-            <Button onClick={handleDemoAlarm}>Demo Alarm</Button>
+            <Button onClick={handleDemoAlarm} className="mr-2">Demo Alarm</Button>
+            <Button onClick={handleAddAlarm} variant="outline">Add Alarm</Button>
           </div>
         ) : (
           alarms.map((alarm) => (
@@ -82,6 +158,8 @@ export default function AlarmTab() {
               key={alarm.id}
               alarm={alarm}
               onToggle={toggleAlarmActive}
+              onEdit={handleEditAlarm}
+              onDelete={handleDeleteAlarm}
             />
           ))
         )}
@@ -91,16 +169,53 @@ export default function AlarmTab() {
       <AlarmModal 
         isOpen={showAlarmModal} 
         onSnooze={handleSnooze} 
-        onDismiss={handleStartScan} 
+        onDismiss={handleDismissAlarm} 
       />
       
       {/* Scan Result Modal */}
       <ScanResultModal 
         isOpen={showScanModal}
-        securityScore={latestScan?.score || 92}
-        issuesFound={latestScan?.issuesFound?.length || 0}
+        securityScore={latestScan?.score || 85}
+        issuesFound={latestScan?.issuesFound?.length || 2}
         securityTip={securityTip?.tip || "Use a password manager to generate and store unique passwords for all your accounts."}
         onDismiss={handleDismissScan}
+      />
+      
+      {/* Math Problem Modal */}
+      <MathProblemModal
+        isOpen={showMathProblemModal}
+        level={2}
+        problemCount={3}
+        onComplete={handleMathProblemComplete}
+        onCancel={handleMathProblemCancel}
+      />
+      
+      {/* Alarm Form Modal */}
+      <AlarmForm
+        isOpen={showAlarmForm}
+        onClose={() => {
+          setShowAlarmForm(false);
+          setEditAlarm(null);
+        }}
+        onSubmit={handleSaveAlarm}
+        defaultValues={editAlarm ? {
+          time: editAlarm.time,
+          label: editAlarm.label || "",
+          days: editAlarm.days,
+          sound: editAlarm.sound,
+          vibrate: editAlarm.vibrate,
+          mathProblem: editAlarm.mathProblem,
+          securityScan: editAlarm.securityScan,
+          phishingDrill: editAlarm.phishingDrill,
+          // Parse additional settings from JSON string
+          ...(editAlarm.settings ? JSON.parse(editAlarm.settings) : {
+            volumeLevel: 80,
+            gradualVolume: false,
+            snoozeCount: 3,
+            snoozeDuration: 5
+          })
+        } : undefined}
+        title={editAlarm ? "Edit Alarm" : "Add New Alarm"}
       />
     </div>
   );

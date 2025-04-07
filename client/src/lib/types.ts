@@ -1,3 +1,10 @@
+export interface AlarmSettings {
+  volumeLevel: number;
+  gradualVolume: boolean;
+  snoozeCount: number;
+  snoozeDuration: number;
+}
+
 export interface Alarm {
   id: number;
   time: string;
@@ -9,6 +16,7 @@ export interface Alarm {
   mathProblem: boolean;
   securityScan: boolean;
   phishingDrill: boolean;
+  settings?: string; // JSON string for additional settings
 }
 
 export interface SecurityIssue {
