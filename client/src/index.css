@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    --background: 232 16% 12%;
-    --foreground: 0 0% 88%;
+    --background: 240 20% 10%;
+    --foreground: 180 100% 98%;
 
-    --card: 240 5% 18%;
-    --card-foreground: 0 0% 98%;
+    --card: 240 25% 15%;
+    --card-foreground: 180 100% 98%;
 
-    --popover: 240 5% 18%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 25% 15%;
+    --popover-foreground: 180 100% 98%;
 
-    --primary: 210 78% 28%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 240 20% 10%;
 
-    --secondary: 14 100% 57%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 275 100% 60%;
+    --secondary-foreground: 180 100% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 240 20% 20%;
+    --muted-foreground: 180 30% 70%;
 
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 210 100% 50%;
+    --accent-foreground: 180 100% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 180 100% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142.1 76.2% 36.3%;
+    --border: 240 25% 20%;
+    --input: 240 25% 18%;
+    --ring: 180 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --chart-1: 210 78% 28%;
-    --chart-2: 14 100% 57%;
-    --chart-3: 122 39% 49%;
-    --chart-4: 245 48% 56%;
-    --chart-5: 42 87% 55%;
+    --chart-1: 180 100% 50%;
+    --chart-2: 275 100% 60%;
+    --chart-3: 210 100% 50%;
+    --chart-4: 150 100% 50%;
+    --chart-5: 320 100% 60%;
 
-    --sidebar-background: 240 5% 7%;
-    --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 210 78% 28%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 5% 15%;
-    --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 240 5% 10%;
-    --sidebar-ring: 210 78% 28%;
+    --sidebar-background: 240 30% 8%;
+    --sidebar-foreground: 180 100% 98%;
+    --sidebar-primary: 180 100% 50%;
+    --sidebar-primary-foreground: 240 20% 10%;
+    --sidebar-accent: 240 20% 15%;
+    --sidebar-accent-foreground: 180 100% 98%;
+    --sidebar-border: 240 25% 15%;
+    --sidebar-ring: 180 100% 50%;
   }
 
   * {
@@ -61,30 +61,187 @@
 
 @layer utilities {
   .status-safe {
-    @apply text-[#4CAF50];
+    @apply text-[#00E5FF];
   }
   
   .status-warning {
-    @apply text-[#FFC107];
+    @apply text-[#FFAB00];
   }
   
   .status-danger {
-    @apply text-[#F44336];
+    @apply text-[#FF5252];
   }
   
   .bg-status-safe {
-    @apply bg-[#4CAF50];
+    @apply bg-[#00E5FF];
   }
   
   .bg-status-warning {
-    @apply bg-[#FFC107];
+    @apply bg-[#FFAB00];
   }
   
   .bg-status-danger {
-    @apply bg-[#F44336];
+    @apply bg-[#FF5252];
+  }
+  
+  .text-status-safe {
+    @apply text-[#00E5FF];
+  }
+  
+  .text-status-warning {
+    @apply text-[#FFAB00];
+  }
+  
+  .text-status-danger {
+    @apply text-[#FF5252];
   }
   
   .text-clock {
     font-family: 'Roboto Mono', monospace;
+  }
+  
+  .cyberpulse {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(0, 229, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 229, 255, 0);
+    }
+  }
+  
+  .cyber-border {
+    position: relative;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    overflow: hidden;
+  }
+  
+  .cyber-border::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(0, 229, 255, 0.7),
+      transparent
+    );
+  }
+  
+  .cyber-glow {
+    text-shadow: 0 0 5px rgba(0, 229, 255, 0.7);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+  }
+  
+  .cyber-bg {
+    background: 
+      radial-gradient(
+        circle at center,
+        rgba(13, 17, 23, 0.8) 0%,
+        rgba(12, 18, 28, 1) 70%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 229, 255, 0.03) 2px,
+        rgba(0, 229, 255, 0.03) 4px
+      );
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Scanning animation - vertical line moving across */
+  @keyframes scanning {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .scanning-element {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .scanning-element::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(0, 229, 255, 0.7),
+      transparent
+    );
+    animation: scanning 2s ease-in-out infinite;
+    z-index: 2;
+  }
+  
+  /* Digital noise background */
+  .digital-noise {
+    position: relative;
+  }
+  
+  .digital-noise::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    pointer-events: none;
+  }
+  
+  /* Data stream animation */
+  @keyframes data-stream {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 0% 100%;
+    }
+  }
+  
+  .data-stream {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .data-stream::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, 
+      transparent, 
+      transparent 80%, 
+      rgba(0, 229, 255, 0.2) 80%,
+      rgba(0, 229, 255, 0.2) 90%,
+      transparent 90%
+    );
+    background-size: 100% 20px;
+    animation: data-stream 1s linear infinite;
+    opacity: 0.5;
+    z-index: 1;
+    pointer-events: none;
   }
 }
