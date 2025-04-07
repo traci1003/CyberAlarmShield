@@ -52,7 +52,7 @@ export function formatDays(days: string[]): string {
 }
 
 export function generateMathProblem(level: number = 1): MathProblem {
-  let num1, num2, operation, answer, question;
+  let num1, num2, num3, operation, answer, question;
   
   // Generate a math problem based on level
   switch(level) {
@@ -65,24 +65,71 @@ export function generateMathProblem(level: number = 1): MathProblem {
       break;
       
     case 2: // Medium
-      num1 = Math.floor(Math.random() * 100) + 100;
-      num2 = Math.floor(Math.random() * 100) + 50;
-      operation = Math.random() > 0.5 ? '+' : '-';
-      answer = operation === '+' ? num1 + num2 : num1 - num2;
-      question = `${num1} ${operation} ${num2} = ?`;
+      // For medium difficulty, use larger numbers or mixed operations
+      if (Math.random() > 0.5) {
+        // Larger numbers
+        num1 = Math.floor(Math.random() * 50) + 20;
+        num2 = Math.floor(Math.random() * 30) + 10;
+        operation = Math.random() > 0.5 ? '+' : '-';
+        answer = operation === '+' ? num1 + num2 : num1 - num2;
+        question = `${num1} ${operation} ${num2} = ?`;
+      } else {
+        // Mixed operations
+        num1 = Math.floor(Math.random() * 15) + 5; 
+        num2 = Math.floor(Math.random() * 5) + 2;
+        num3 = Math.floor(Math.random() * 10) + 1;
+        answer = (num1 * num2) + num3;
+        question = `(${num1} × ${num2}) + ${num3} = ?`;
+      }
       break;
       
     case 3: // Hard
-      num1 = Math.floor(Math.random() * 20) + 10;
-      num2 = Math.floor(Math.random() * 10) + 2;
-      operation = Math.random() > 0.5 ? 'x' : '÷';
-      if (operation === 'x') {
+      // Choose between different hard problem types
+      const hardType = Math.floor(Math.random() * 3);
+      
+      if (hardType === 0) {
+        // Multiplication
+        num1 = Math.floor(Math.random() * 20) + 10;
+        num2 = Math.floor(Math.random() * 10) + 2;
         answer = num1 * num2;
-        question = `${num1} ${operation} ${num2} = ?`;
+        question = `${num1} × ${num2} = ?`;
+      } 
+      else if (hardType === 1) {
+        // Division with clean results
+        num2 = Math.floor(Math.random() * 10) + 2; // divisor
+        answer = Math.floor(Math.random() * 10) + 2; // quotient
+        num1 = num2 * answer; // dividend
+        question = `${num1} ÷ ${num2} = ?`;
+      }
+      else {
+        // Complex expression
+        num1 = Math.floor(Math.random() * 10) + 5;
+        num2 = Math.floor(Math.random() * 10) + 5;
+        num3 = Math.floor(Math.random() * 10) + 2;
+        // (num1 + num2) * num3
+        answer = (num1 + num2) * num3;
+        question = `(${num1} + ${num2}) × ${num3} = ?`;
+      }
+      break;
+      
+    case 4: // Very Hard
+      // Complex expressions with multiple operations
+      const veryHardType = Math.floor(Math.random() * 2);
+      
+      if (veryHardType === 0) {
+        // (a × b) - (c × d)
+        num1 = Math.floor(Math.random() * 10) + 5;
+        num2 = Math.floor(Math.random() * 5) + 2;
+        num3 = Math.floor(Math.random() * 5) + 1;
+        const num4 = Math.floor(Math.random() * 5) + 1;
+        answer = (num1 * num2) - (num3 * num4);
+        question = `(${num1} × ${num2}) - (${num3} × ${num4}) = ?`;
       } else {
-        // Ensure division results in whole number
-        answer = num1;
-        question = `${num1 * num2} ${operation} ${num2} = ?`;
+        // a² + b
+        num1 = Math.floor(Math.random() * 10) + 2;
+        num2 = Math.floor(Math.random() * 20) + 5;
+        answer = (num1 * num1) + num2;
+        question = `${num1}² + ${num2} = ?`;
       }
       break;
       
@@ -98,9 +145,41 @@ export function generateMathProblem(level: number = 1): MathProblem {
   const answerStr = answer.toString();
   const options = [answerStr];
   
+  // More clever wrong answers that are close to the real answer
   while (options.length < 4) {
-    const wrongAnswer = (answer + Math.floor(Math.random() * 10) - 5).toString();
-    if (!options.includes(wrongAnswer) && wrongAnswer !== answerStr) {
+    // Different wrong answer strategies
+    let wrongAnswer;
+    const strategy = Math.floor(Math.random() * 4);
+    
+    if (strategy === 0) {
+      // Small deviation
+      wrongAnswer = (answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1)).toString();
+    } else if (strategy === 1) {
+      // Larger deviation
+      wrongAnswer = (answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 10) + 5)).toString();
+    } else if (strategy === 2) {
+      // Digit swap if multi-digit
+      if (answer > 9) {
+        const answerDigits = answerStr.split('');
+        const pos1 = Math.floor(Math.random() * answerDigits.length);
+        let pos2 = Math.floor(Math.random() * answerDigits.length);
+        while (pos2 === pos1) {
+          pos2 = Math.floor(Math.random() * answerDigits.length);
+        }
+        [answerDigits[pos1], answerDigits[pos2]] = [answerDigits[pos2], answerDigits[pos1]];
+        wrongAnswer = answerDigits.join('');
+      } else {
+        // For single-digit numbers, just add/subtract
+        wrongAnswer = (answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 2)).toString();
+      }
+    } else {
+      // Percentage off
+      const percentage = Math.floor(Math.random() * 20) + 10; // 10-30% off
+      wrongAnswer = Math.round(answer * (1 + (percentage * (Math.random() > 0.5 ? 1 : -1)) / 100)).toString();
+    }
+    
+    // Make sure it's not the same as correct answer and not already in options
+    if (!options.includes(wrongAnswer) && wrongAnswer !== answerStr && parseInt(wrongAnswer) > 0) {
       options.push(wrongAnswer);
     }
   }
