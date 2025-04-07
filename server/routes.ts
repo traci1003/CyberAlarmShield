@@ -7,7 +7,8 @@ import {
   insertSecurityScanSchema, 
   insertNetworkVulnerabilitySchema,
   insertAppPermissionSchema,
-  insertThreatAlertSchema
+  insertThreatAlertSchema,
+  insertLockdownSettingsSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -564,6 +565,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         permissions: app.permissions
       }))
     });
+  });
+  
+  // Lockdown settings endpoints
+  router.get("/security/lockdown", async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const settings = await storage.getLockdownSettings(userId);
+    
+    if (!settings) {
+      return res.status(404).json({ message: "Lockdown settings not found" });
+    }
+    
+    res.json(settings);
+  });
+  
+  router.post("/security/lockdown", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertLockdownSettingsSchema.parse(req.body);
+      const userId = getUserId(req);
+      
+      // Check if settings already exist
+      const existingSettings = await storage.getLockdownSettings(userId);
+      
+      if (existingSettings) {
+        // Update existing settings
+        const updatedSettings = await storage.updateLockdownSettings(userId, validatedData);
+        return res.json(updatedSettings);
+      }
+      
+      // Create new settings
+      const settings = await storage.createLockdownSettings({
+        ...validatedData,
+        userId
+      });
+      
+      res.status(201).json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid lockdown settings data", errors: error.errors });
+      }
+      throw error;
+    }
+  });
+  
+  router.patch("/security/lockdown", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertLockdownSettingsSchema.partial().parse(req.body);
+      const userId = getUserId(req);
+      
+      const updatedSettings = await storage.updateLockdownSettings(userId, validatedData);
+      
+      if (!updatedSettings) {
+        // If no settings exist, create default ones with the provided updates
+        const settings = await storage.createLockdownSettings({
+          ...req.body,
+          userId
+        });
+        return res.status(201).json(settings);
+      }
+      
+      res.json(updatedSettings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid lockdown settings data", errors: error.errors });
+      }
+      throw error;
+    }
+  });
+  
+  router.post("/security/lockdown/toggle", async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const { isEnabled } = req.body;
+    
+    if (typeof isEnabled !== 'boolean') {
+      return res.status(400).json({ message: "isEnabled must be a boolean value" });
+    }
+    
+    const settings = await storage.toggleLockdownMode(userId, isEnabled);
+    res.json(settings);
   });
   
   // Register routes

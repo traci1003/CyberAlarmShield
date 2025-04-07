@@ -5,7 +5,8 @@ import {
   securityTips, type SecurityTip, type InsertSecurityTip,
   networkVulnerabilities, type NetworkVulnerability, type InsertNetworkVulnerability,
   appPermissions, type AppPermission, type InsertAppPermission,
-  threatAlerts, type ThreatAlert, type InsertThreatAlert
+  threatAlerts, type ThreatAlert, type InsertThreatAlert,
+  lockdownSettings, type LockdownSettings, type InsertLockdownSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, or } from "drizzle-orm";
@@ -48,6 +49,12 @@ export interface IStorage {
   createThreatAlert(threat: InsertThreatAlert & { userId: number }): Promise<ThreatAlert>;
   updateThreatAlert(id: number, update: Partial<ThreatAlert>): Promise<ThreatAlert | undefined>;
   dismissThreatAlert(id: number): Promise<boolean>;
+  
+  // Lockdown settings methods
+  getLockdownSettings(userId: number): Promise<LockdownSettings | undefined>;
+  createLockdownSettings(settings: InsertLockdownSettings & { userId: number }): Promise<LockdownSettings>;
+  updateLockdownSettings(userId: number, settings: Partial<InsertLockdownSettings>): Promise<LockdownSettings | undefined>;
+  toggleLockdownMode(userId: number, isEnabled: boolean): Promise<LockdownSettings | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -236,6 +243,49 @@ export class DatabaseStorage implements IStorage {
       .where(eq(threatAlerts.id, id))
       .returning({ id: threatAlerts.id });
     return !!updatedThreat;
+  }
+  
+  // Lockdown settings methods
+  async getLockdownSettings(userId: number): Promise<LockdownSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(lockdownSettings)
+      .where(eq(lockdownSettings.userId, userId));
+    return settings;
+  }
+  
+  async createLockdownSettings(settings: InsertLockdownSettings & { userId: number }): Promise<LockdownSettings> {
+    const [newSettings] = await db.insert(lockdownSettings).values(settings).returning();
+    return newSettings;
+  }
+  
+  async updateLockdownSettings(userId: number, settings: Partial<InsertLockdownSettings>): Promise<LockdownSettings | undefined> {
+    const [updatedSettings] = await db
+      .update(lockdownSettings)
+      .set({ ...settings, lastUpdated: new Date() })
+      .where(eq(lockdownSettings.userId, userId))
+      .returning();
+    return updatedSettings;
+  }
+  
+  async toggleLockdownMode(userId: number, isEnabled: boolean): Promise<LockdownSettings | undefined> {
+    const existingSettings = await this.getLockdownSettings(userId);
+    
+    if (existingSettings) {
+      return await this.updateLockdownSettings(userId, { isEnabled });
+    } else {
+      // Create default settings if none exist
+      return await this.createLockdownSettings({
+        userId,
+        isEnabled,
+        startTime: "22:00",
+        endTime: "07:00",
+        blockBackgroundActivity: true,
+        enforceVpn: false,
+        disableBluetoothWifi: false,
+        autoScanOnEnd: true
+      });
+    }
   }
   
   async seedSecurityTips(): Promise<void> {

@@ -5,6 +5,7 @@ import { SecurityIssue } from "@/components/SecurityIssue";
 import { NetworkScan } from "@/components/NetworkScan";
 import { PermissionsCheck } from "@/components/PermissionsCheck";
 import { ThreatAlert, Threat } from "@/components/ThreatAlert";
+import { LockdownSettings } from "@/components/LockdownSettings";
 import { useSecurity } from "@/hooks/useSecurity";
 import { formatTime, formatAmPm } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -288,29 +289,8 @@ export default function SecurityTab() {
           <TabsContent value="permissions">
             <PermissionsCheck />
             
-            {/* Auto-Lock Settings */}
-            <div className="bg-card rounded-xl p-4 mb-4 cyber-border">
-              <div className="flex items-start">
-                <i className="ri-timer-line text-primary text-xl mr-3 mt-0.5"></i>
-                <div className="flex-1">
-                  <h4 className="text-card-foreground font-medium mb-1">Auto-Lockdown Mode</h4>
-                  <div className="flex justify-between items-center mt-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Enable overnight protection</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Activate enhanced security during sleep hours</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/20"
-                    >
-                      <i className="ri-lock-line mr-1.5"></i>
-                      Configure
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Auto-Lockdown Mode Settings */}
+            <LockdownSettings />
           </TabsContent>
         </Tabs>
       </div>

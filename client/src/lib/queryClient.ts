@@ -23,24 +23,21 @@ async function throwIfResNotOk(res: Response) {
 }
 
 // Enhanced API request function with improved error handling
-export async function apiRequest(
-  method: string,
+export async function apiRequest<T = any>(
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  options?: RequestInit,
+): Promise<T> {
   try {
     const res = await fetch(url, {
-      method,
-      headers: data ? { "Content-Type": "application/json" } : {},
-      body: data ? JSON.stringify(data) : undefined,
+      ...options,
       credentials: "include",
     });
 
     await throwIfResNotOk(res);
-    return res;
+    return await res.json();
   } catch (error) {
     // Log error for debugging
-    console.error(`API Request Error (${method} ${url}):`, error);
+    console.error(`API Request Error (${options?.method || 'GET'} ${url}):`, error);
     throw error;
   }
 }

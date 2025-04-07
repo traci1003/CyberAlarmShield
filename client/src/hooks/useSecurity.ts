@@ -76,8 +76,10 @@ export function useSecurity() {
   // Perform security check
   const { mutate: performSecurityCheck, isPending: isChecking } = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/security/check');
-      return res.json();
+      return apiRequest<SecurityScan>('/api/security/check', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
     },
     onMutate: async () => {
       // If we have no scan yet, create mock data to make the UI look good

@@ -44,6 +44,20 @@ export const securityScans = pgTable("security_scans", {
   permissionsAccessed: jsonb("permissions_accessed"),
 });
 
+// Lockdown settings
+export const lockdownSettings = pgTable("lockdown_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  isEnabled: boolean("is_enabled").default(false),
+  startTime: text("start_time").default("22:00"),
+  endTime: text("end_time").default("07:00"),
+  blockBackgroundActivity: boolean("block_background_activity").default(true),
+  enforceVpn: boolean("enforce_vpn").default(false),
+  disableBluetoothWifi: boolean("disable_bluetooth_wifi").default(false),
+  autoScanOnEnd: boolean("auto_scan_on_end").default(true),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
 // Network Vulnerability table
 export const networkVulnerabilities = pgTable("network_vulnerabilities", {
   id: serial("id").primaryKey(),
@@ -102,6 +116,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   networkVulnerabilities: many(networkVulnerabilities),
   appPermissions: many(appPermissions),
   threatAlerts: many(threatAlerts),
+  lockdownSettings: many(lockdownSettings),
 }));
 
 export const securityScansRelations = relations(securityScans, ({ one, many }) => ({
@@ -138,6 +153,13 @@ export const appPermissionsRelations = relations(appPermissions, ({ one }) => ({
 export const threatAlertsRelations = relations(threatAlerts, ({ one }) => ({
   user: one(users, {
     fields: [threatAlerts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const lockdownSettingsRelations = relations(lockdownSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [lockdownSettings.userId],
     references: [users.id],
   }),
 }));
@@ -185,6 +207,12 @@ export const insertSecurityTipSchema = createInsertSchema(securityTips).omit({
   id: true,
 });
 
+export const insertLockdownSettingsSchema = createInsertSchema(lockdownSettings).omit({
+  id: true,
+  userId: true,
+  lastUpdated: true,
+});
+
 // Define types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -206,5 +234,8 @@ export type ThreatAlert = typeof threatAlerts.$inferSelect;
 
 export type InsertSecurityTip = z.infer<typeof insertSecurityTipSchema>;
 export type SecurityTip = typeof securityTips.$inferSelect;
+
+export type InsertLockdownSettings = z.infer<typeof insertLockdownSettingsSchema>;
+export type LockdownSettings = typeof lockdownSettings.$inferSelect;
 
 export type SecurityStatus = 'safe' | 'warning' | 'danger';
