@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Shield, XCircle, AlarmClock } from "lucide-react";
+import { Shield, XCircle, AlarmClock, Music2 } from "lucide-react";
+import { SoundCloudPlayer } from "@/components/SoundCloudPlayer";
 import { MathProblem } from "@/lib/types";
 import { generateMathProblem } from "@/lib/utils";
 
@@ -10,6 +11,7 @@ interface AlarmModalProps {
   onDismiss: () => void;
   alarmLabel?: string;
   alarmTime?: string;
+  soundCloudUrl?: string;
 }
 
 export function AlarmModal({ 
@@ -17,7 +19,8 @@ export function AlarmModal({
   onSnooze, 
   onDismiss,
   alarmLabel = "Wake Up",
-  alarmTime = "6:30 AM"
+  alarmTime = "6:30 AM",
+  soundCloudUrl = ""
 }: AlarmModalProps) {
   const [mathProblem] = useState<MathProblem>(() => generateMathProblem(2));
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -62,7 +65,24 @@ export function AlarmModal({
           <p className="text-muted-foreground">Complete the challenge to dismiss alarm</p>
         </div>
         
-        {/* Security Challenge */}
+        {/* SoundCloud Player - only show if URL is provided */}
+        {soundCloudUrl && (
+          <div className="bg-background rounded-xl p-4 mb-6 border border-muted">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-card-foreground font-medium flex items-center">
+                <Music2 className="h-4 w-4 mr-2 text-primary" /> 
+                Wake Up Music
+              </h3>
+            </div>
+            <SoundCloudPlayer 
+              playlistUrl={soundCloudUrl}
+              autoPlay={true}
+              className="w-full h-24 mb-2"
+            />
+          </div>
+        )}
+
+        {/* Math Challenge */}
         <div className="bg-background rounded-xl p-5 mb-6 border border-muted">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-card-foreground font-medium">Math Challenge</h3>

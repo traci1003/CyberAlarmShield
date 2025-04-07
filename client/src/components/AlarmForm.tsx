@@ -36,6 +36,7 @@ const alarmFormSchema = z.object({
   gradualVolume: z.boolean().default(false),
   snoozeCount: z.number().min(0).max(5).default(3),
   snoozeDuration: z.number().min(1).max(30).default(5),
+  soundCloudUrl: z.string().url().optional().or(z.literal('')),
 });
 
 type AlarmFormValues = z.infer<typeof alarmFormSchema>;
@@ -65,6 +66,7 @@ export function AlarmForm({
     gradualVolume: false,
     snoozeCount: 3,
     snoozeDuration: 5,
+    soundCloudUrl: "",
   },
   title = "Add New Alarm"
 }: AlarmFormProps) {
@@ -289,6 +291,30 @@ export function AlarmForm({
                 />
               </div>
             </div>
+
+            {/* SoundCloud Playlist URL */}
+            {form.watch("sound") && (
+              <FormField
+                control={form.control}
+                name="soundCloudUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SoundCloud Playlist URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://soundcloud.com/user/playlist" 
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Add a SoundCloud playlist URL to wake up to your favorite music
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Wake-up Challenge Settings */}
             <div className="space-y-4">

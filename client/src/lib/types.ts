@@ -3,6 +3,7 @@ export interface AlarmSettings {
   gradualVolume: boolean;
   snoozeCount: number;
   snoozeDuration: number;
+  soundCloudUrl?: string; // SoundCloud playlist URL
 }
 
 export interface Alarm {
@@ -16,6 +17,7 @@ export interface Alarm {
   mathProblem: boolean;
   securityScan: boolean;
   phishingDrill: boolean;
+  soundCloudUrl?: string; // SoundCloud playlist URL
   settings?: string; // JSON string for additional settings
 }
 

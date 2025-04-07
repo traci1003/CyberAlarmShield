@@ -89,6 +89,12 @@ export default function AlarmTab() {
     setShowAlarmModal(true);
   };
   
+  // Get the SoundCloud URL from the active alarm
+  const getActiveSoundCloudUrl = (): string => {
+    const activeAlarm = alarms.find(a => a.isActive);
+    return activeAlarm?.soundCloudUrl || "";
+  };
+  
   // Open add alarm form
   const handleAddAlarm = () => {
     setEditAlarm(null);
@@ -169,7 +175,8 @@ export default function AlarmTab() {
       <AlarmModal 
         isOpen={showAlarmModal} 
         onSnooze={handleSnooze} 
-        onDismiss={handleDismissAlarm} 
+        onDismiss={handleDismissAlarm}
+        soundCloudUrl={getActiveSoundCloudUrl()}
       />
       
       {/* Scan Result Modal */}
@@ -207,6 +214,7 @@ export default function AlarmTab() {
           mathProblem: editAlarm.mathProblem,
           securityScan: editAlarm.securityScan,
           phishingDrill: editAlarm.phishingDrill,
+          soundCloudUrl: editAlarm.soundCloudUrl || "",
           // Parse additional settings from JSON string
           ...(editAlarm.settings ? JSON.parse(editAlarm.settings) : {
             volumeLevel: 80,

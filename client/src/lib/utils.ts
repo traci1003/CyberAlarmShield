@@ -240,6 +240,7 @@ export function convertFormAlarmToApiAlarm(formData: any): Omit<any, 'id'> {
     mathProblem: formData.mathProblem,
     securityScan: formData.securityScan,
     phishingDrill: formData.phishingDrill,
+    soundCloudUrl: formData.soundCloudUrl || undefined,
     // Add any additional properties to store in the database
     settings: JSON.stringify({
       volumeLevel: formData.volumeLevel,

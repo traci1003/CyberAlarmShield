@@ -24,6 +24,7 @@ export const alarms = pgTable("alarms", {
   mathProblem: boolean("math_problem").default(false),
   securityScan: boolean("security_scan").default(false),
   phishingDrill: boolean("phishing_drill").default(false),
+  soundCloudUrl: text("sound_cloud_url"), // SoundCloud playlist URL
   settings: text("settings"), // JSON string for storing additional settings
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
