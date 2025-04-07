@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 232 16% 12%;
+    --foreground: 0 0% 88%;
+
+    --card: 240 5% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 5% 18%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 210 78% 28%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 14 100% 57%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142.1 76.2% 36.3%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 210 78% 28%;
+    --chart-2: 14 100% 57%;
+    --chart-3: 122 39% 49%;
+    --chart-4: 245 48% 56%;
+    --chart-5: 42 87% 55%;
+
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 210 78% 28%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 5% 15%;
+    --sidebar-accent-foreground: 0 0% 88%;
+    --sidebar-border: 240 5% 10%;
+    --sidebar-ring: 210 78% 28%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .status-safe {
+    @apply text-[#4CAF50];
+  }
+  
+  .status-warning {
+    @apply text-[#FFC107];
+  }
+  
+  .status-danger {
+    @apply text-[#F44336];
+  }
+  
+  .bg-status-safe {
+    @apply bg-[#4CAF50];
+  }
+  
+  .bg-status-warning {
+    @apply bg-[#FFC107];
+  }
+  
+  .bg-status-danger {
+    @apply bg-[#F44336];
+  }
+  
+  .text-clock {
+    font-family: 'Roboto Mono', monospace;
+  }
+}
