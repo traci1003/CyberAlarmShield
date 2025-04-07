@@ -2,8 +2,13 @@ import {
   users, type User, type InsertUser,
   alarms, type Alarm, type InsertAlarm,
   securityScans, type SecurityScan, type InsertSecurityScan,
-  securityTips, type SecurityTip, type InsertSecurityTip
+  securityTips, type SecurityTip, type InsertSecurityTip,
+  networkVulnerabilities, type NetworkVulnerability, type InsertNetworkVulnerability,
+  appPermissions, type AppPermission, type InsertAppPermission,
+  threatAlerts, type ThreatAlert, type InsertThreatAlert
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, sql, or } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -27,88 +32,83 @@ export interface IStorage {
   getSecurityTips(): Promise<SecurityTip[]>;
   getRandomSecurityTip(): Promise<SecurityTip | undefined>;
   createSecurityTip(tip: InsertSecurityTip): Promise<SecurityTip>;
+  
+  // Network vulnerability methods
+  getNetworkVulnerabilities(userId: number, limit?: number): Promise<NetworkVulnerability[]>;
+  createNetworkVulnerability(vulnerability: InsertNetworkVulnerability & { userId: number, scanId?: number }): Promise<NetworkVulnerability>;
+  updateNetworkVulnerability(id: number, update: Partial<NetworkVulnerability>): Promise<NetworkVulnerability | undefined>;
+  
+  // App permissions methods
+  getAppPermissions(userId: number): Promise<AppPermission[]>;
+  createAppPermission(permission: InsertAppPermission & { userId: number, scanId?: number }): Promise<AppPermission>;
+  updateAppPermission(id: number, update: Partial<AppPermission>): Promise<AppPermission | undefined>;
+  
+  // Threat alerts methods
+  getThreatAlerts(userId: number, onlyActive?: boolean): Promise<ThreatAlert[]>;
+  createThreatAlert(threat: InsertThreatAlert & { userId: number }): Promise<ThreatAlert>;
+  updateThreatAlert(id: number, update: Partial<ThreatAlert>): Promise<ThreatAlert | undefined>;
+  dismissThreatAlert(id: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private alarms: Map<number, Alarm>;
-  private securityScans: Map<number, SecurityScan>;
-  private securityTips: Map<number, SecurityTip>;
-  private userIdCounter: number;
-  private alarmIdCounter: number;
-  private scanIdCounter: number;
-  private tipIdCounter: number;
-
-  constructor() {
-    this.users = new Map();
-    this.alarms = new Map();
-    this.securityScans = new Map();
-    this.securityTips = new Map();
-    this.userIdCounter = 1;
-    this.alarmIdCounter = 1;
-    this.scanIdCounter = 1;
-    this.tipIdCounter = 1;
-    
-    // Seed some security tips
-    this.seedSecurityTips();
-  }
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
   }
 
   // Alarm methods
   async getAlarms(userId: number): Promise<Alarm[]> {
-    return Array.from(this.alarms.values()).filter(
-      (alarm) => alarm.userId === userId,
-    );
+    return await db.select().from(alarms).where(eq(alarms.userId, userId));
   }
 
   async getAlarm(id: number): Promise<Alarm | undefined> {
-    return this.alarms.get(id);
+    const [alarm] = await db.select().from(alarms).where(eq(alarms.id, id));
+    return alarm;
   }
 
   async createAlarm(alarm: InsertAlarm & { userId: number }): Promise<Alarm> {
-    const id = this.alarmIdCounter++;
-    const newAlarm: Alarm = { ...alarm, id };
-    this.alarms.set(id, newAlarm);
+    const [newAlarm] = await db.insert(alarms).values(alarm).returning();
     return newAlarm;
   }
 
-  async updateAlarm(id: number, alarm: Partial<InsertAlarm>): Promise<Alarm | undefined> {
-    const existingAlarm = this.alarms.get(id);
-    if (!existingAlarm) return undefined;
-    
-    const updatedAlarm: Alarm = { ...existingAlarm, ...alarm };
-    this.alarms.set(id, updatedAlarm);
+  async updateAlarm(id: number, update: Partial<InsertAlarm>): Promise<Alarm | undefined> {
+    const [updatedAlarm] = await db
+      .update(alarms)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(alarms.id, id))
+      .returning();
     return updatedAlarm;
   }
 
   async deleteAlarm(id: number): Promise<boolean> {
-    return this.alarms.delete(id);
+    const result = await db.delete(alarms).where(eq(alarms.id, id)).returning({ id: alarms.id });
+    return result.length > 0;
   }
 
   // Security scan methods
   async getSecurityScans(userId: number, limit?: number): Promise<SecurityScan[]> {
-    const scans = Array.from(this.securityScans.values())
-      .filter((scan) => scan.userId === userId)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const query = db
+      .select()
+      .from(securityScans)
+      .where(eq(securityScans.userId, userId))
+      .orderBy(desc(securityScans.timestamp));
     
-    return limit ? scans.slice(0, limit) : scans;
+    if (limit) {
+      query.limit(limit);
+    }
+    
+    return await query;
   }
 
   async getLatestSecurityScan(userId: number): Promise<SecurityScan | undefined> {
@@ -117,51 +117,157 @@ export class MemStorage implements IStorage {
   }
 
   async createSecurityScan(scan: InsertSecurityScan & { userId: number }): Promise<SecurityScan> {
-    const id = this.scanIdCounter++;
-    const timestamp = new Date();
-    const newScan: SecurityScan = { ...scan, id, timestamp };
-    this.securityScans.set(id, newScan);
+    const [newScan] = await db.insert(securityScans).values(scan).returning();
     return newScan;
   }
 
   // Security tips methods
   async getSecurityTips(): Promise<SecurityTip[]> {
-    return Array.from(this.securityTips.values());
+    return await db.select().from(securityTips).where(eq(securityTips.isActive, true));
   }
 
   async getRandomSecurityTip(): Promise<SecurityTip | undefined> {
-    const tips = Array.from(this.securityTips.values());
-    if (tips.length === 0) return undefined;
+    // Use PostgreSQL's RANDOM() function to get a random tip
+    const [tip] = await db
+      .select()
+      .from(securityTips)
+      .where(eq(securityTips.isActive, true))
+      .orderBy(sql`RANDOM()`)
+      .limit(1);
     
-    const randomIndex = Math.floor(Math.random() * tips.length);
-    return tips[randomIndex];
+    return tip;
   }
 
   async createSecurityTip(tip: InsertSecurityTip): Promise<SecurityTip> {
-    const id = this.tipIdCounter++;
-    const newTip: SecurityTip = { ...tip, id };
-    this.securityTips.set(id, newTip);
+    const [newTip] = await db.insert(securityTips).values(tip).returning();
     return newTip;
   }
   
-  private seedSecurityTips() {
-    const tips = [
-      { tip: "Always check the sender's email address, not just the display name, to avoid falling for phishing attacks.", category: "phishing" },
-      { tip: "Use a password manager to generate and store unique passwords for all your accounts.", category: "passwords" },
-      { tip: "Enable two-factor authentication on all your important accounts for an extra layer of security.", category: "authentication" },
-      { tip: "Regularly update your device's operating system and apps to protect against security vulnerabilities.", category: "updates" },
-      { tip: "Be cautious when connecting to public Wi-Fi networks. Consider using a VPN for better security.", category: "network" },
-      { tip: "Review app permissions regularly and revoke access to your camera, microphone, and location when not needed.", category: "privacy" },
-      { tip: "Encrypt your sensitive data to protect it from unauthorized access even if your device is lost or stolen.", category: "encryption" },
-      { tip: "Be wary of suspicious links in emails, texts, or social media messages that could lead to phishing sites.", category: "phishing" },
-      { tip: "Backup your important data regularly to protect against ransomware attacks and device failure.", category: "backup" },
-      { tip: "Lock your device with a strong PIN, pattern, or biometric authentication to prevent unauthorized access.", category: "device" }
-    ];
+  // Network vulnerability methods
+  async getNetworkVulnerabilities(userId: number, limit?: number): Promise<NetworkVulnerability[]> {
+    const query = db
+      .select()
+      .from(networkVulnerabilities)
+      .where(eq(networkVulnerabilities.userId, userId))
+      .orderBy(desc(networkVulnerabilities.timestamp));
     
-    tips.forEach(tip => {
-      this.createSecurityTip(tip);
-    });
+    if (limit) {
+      query.limit(limit);
+    }
+    
+    return await query;
+  }
+  
+  async createNetworkVulnerability(vulnerability: InsertNetworkVulnerability & { userId: number, scanId?: number }): Promise<NetworkVulnerability> {
+    const [newVulnerability] = await db.insert(networkVulnerabilities).values(vulnerability).returning();
+    return newVulnerability;
+  }
+  
+  async updateNetworkVulnerability(id: number, update: Partial<NetworkVulnerability>): Promise<NetworkVulnerability | undefined> {
+    const [updatedVulnerability] = await db
+      .update(networkVulnerabilities)
+      .set(update)
+      .where(eq(networkVulnerabilities.id, id))
+      .returning();
+    return updatedVulnerability;
+  }
+  
+  // App permissions methods
+  async getAppPermissions(userId: number): Promise<AppPermission[]> {
+    return await db
+      .select()
+      .from(appPermissions)
+      .where(eq(appPermissions.userId, userId))
+      .orderBy(appPermissions.appName, appPermissions.permissionType);
+  }
+  
+  async createAppPermission(permission: InsertAppPermission & { userId: number, scanId?: number }): Promise<AppPermission> {
+    const [newPermission] = await db.insert(appPermissions).values(permission).returning();
+    return newPermission;
+  }
+  
+  async updateAppPermission(id: number, update: Partial<AppPermission>): Promise<AppPermission | undefined> {
+    const [updatedPermission] = await db
+      .update(appPermissions)
+      .set({ ...update, lastUpdated: new Date() })
+      .where(eq(appPermissions.id, id))
+      .returning();
+    return updatedPermission;
+  }
+  
+  // Threat alerts methods
+  async getThreatAlerts(userId: number, onlyActive: boolean = false): Promise<ThreatAlert[]> {
+    let query = db
+      .select()
+      .from(threatAlerts)
+      .where(eq(threatAlerts.userId, userId));
+    
+    if (onlyActive) {
+      query = db
+        .select()
+        .from(threatAlerts)
+        .where(and(
+          eq(threatAlerts.userId, userId),
+          eq(threatAlerts.dismissed, false)
+        ));
+    }
+    
+    return await query.orderBy(desc(threatAlerts.timestamp));
+  }
+  
+  async createThreatAlert(threat: InsertThreatAlert & { userId: number }): Promise<ThreatAlert> {
+    const [newThreat] = await db.insert(threatAlerts).values(threat).returning();
+    return newThreat;
+  }
+  
+  async updateThreatAlert(id: number, update: Partial<ThreatAlert>): Promise<ThreatAlert | undefined> {
+    const [updatedThreat] = await db
+      .update(threatAlerts)
+      .set(update)
+      .where(eq(threatAlerts.id, id))
+      .returning();
+    return updatedThreat;
+  }
+  
+  async dismissThreatAlert(id: number): Promise<boolean> {
+    const [updatedThreat] = await db
+      .update(threatAlerts)
+      .set({ dismissed: true })
+      .where(eq(threatAlerts.id, id))
+      .returning({ id: threatAlerts.id });
+    return !!updatedThreat;
+  }
+  
+  async seedSecurityTips(): Promise<void> {
+    const existingTips = await db.select().from(securityTips);
+    
+    if (existingTips.length === 0) {
+      const tips = [
+        { tip: "Always check the sender's email address, not just the display name, to avoid falling for phishing attacks.", category: "phishing", isActive: true },
+        { tip: "Use a password manager to generate and store unique passwords for all your accounts.", category: "passwords", isActive: true },
+        { tip: "Enable two-factor authentication on all your important accounts for an extra layer of security.", category: "authentication", isActive: true },
+        { tip: "Regularly update your device's operating system and apps to protect against security vulnerabilities.", category: "updates", isActive: true },
+        { tip: "Be cautious when connecting to public Wi-Fi networks. Consider using a VPN for better security.", category: "network", isActive: true },
+        { tip: "Review app permissions regularly and revoke access to your camera, microphone, and location when not needed.", category: "privacy", isActive: true },
+        { tip: "Encrypt your sensitive data to protect it from unauthorized access even if your device is lost or stolen.", category: "encryption", isActive: true },
+        { tip: "Be wary of suspicious links in emails, texts, or social media messages that could lead to phishing sites.", category: "phishing", isActive: true },
+        { tip: "Backup your important data regularly to protect against ransomware attacks and device failure.", category: "backup", isActive: true },
+        { tip: "Lock your device with a strong PIN, pattern, or biometric authentication to prevent unauthorized access.", category: "device", isActive: true }
+      ];
+      
+      await db.insert(securityTips).values(tips);
+    }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
+
+// Initialize database with seed data
+(async () => {
+  try {
+    await (storage as DatabaseStorage).seedSecurityTips();
+    console.log('Database initialized with seed data');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+  }
+})();
