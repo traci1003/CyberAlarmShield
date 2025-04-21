@@ -2,7 +2,7 @@
 
 A full-stack, real-time intrusion detection and threat monitoring app powered by TypeScript, Express, and AI. Built to track, alert, and visualize suspicious cyber activity — perfect for red team simulations, security dashboards, or educational tools.
 
-> ✅ Try it live: [CyberAlarmShield /alarm View](https://1f29e15b-2391-4d1d-bead-3fb643e4b216-00-d5m90hpu8jz9.riker.replit.dev/alarm)
+> ✅ Try it live: [CyberAlarmShield /alarm View](https://cyber-alarm-shield-traci1003.replit.app/alarm)
 
 ---
 
